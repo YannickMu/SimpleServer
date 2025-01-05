@@ -1,7 +1,7 @@
 use std::net::{TcpListener, TcpStream};
 use std::env;
 use std::io::{BufReader, prelude::*, Result, Lines};
-use server::{SHUTDOWN, ARGS, NOT_FOUND_ERROR, BASE_PATH, API_PATH, HTML_PATH};
+use server::{API_PATH, ARGS, BASE_PATH, HTML_PATH, NOT_FOUND_ERROR, SHUTDOWN};
 use std::process::Command;
 use std::path::Path;
 use std::process;
@@ -25,7 +25,7 @@ fn main() -> () {
 		eprintln!("\x1b[31mError: Directory {}{} doesn't exist\x1b[0m", BASE_PATH, HTML_PATH);
 		process::exit(1);
 	} else if ARGS.lock().unwrap().len() == 1 {
-		eprintln!("\x1b[31mError: Argument required \x1b[0mapi\x1b[31m for api server or \x1b[0mhtml\x1b[31m for html server!\x1b[0m");
+		eprintln!("\x1b[31mError: Argument required \x1b[0mrust\x1b[31m for api server or \x1b[0mhtml\x1b[31m for html server!\x1b[0m");
 		process::exit(1);
 	}
 	}
@@ -66,10 +66,10 @@ fn handle_connection(mut stream: TcpStream) {
 		path = request_line.split_whitespace().nth(1).unwrap_or("/");
 		req_type = request_line.split_whitespace().nth(0).unwrap_or("GET");
 	}
-	if ARGS.lock().unwrap().len() == 2 && &ARGS.lock().unwrap()[1] == "api" {
-		let mut output: String;
-		let pathargs: String = format!("{path}?args=none");
-		let realpath: &str = pathargs.split('?').nth(0).unwrap();
+	let pathargs: String = format!("{path}?args=none");
+	let realpath: &str = pathargs.split('?').nth(0).unwrap();
+	let mut output: String = String::from("");
+	if ARGS.lock().unwrap().len() == 2 && &ARGS.lock().unwrap()[1] == "rust" {
 		if realpath == "/" {
 			let executable: String = format!("{BASE_PATH}{API_PATH}/main");
 			if Path::new(&executable).is_file() {
@@ -85,12 +85,12 @@ fn handle_connection(mut stream: TcpStream) {
 				output = NOT_FOUND_ERROR.to_string();
 			}
 		}
+	} else if response.len() == 0 {
+		response = format!("HTTP/1.1 500 INTERNAL SERVER\nContent-Length: 3\n\n...");
+	}
+	if response.len() == 0 {
 		let length: usize = output.len();
 		response = format!("HTTP/1.1 200 ACCEPTED\nContent-Length: {length}\n\n{output}");
-	} else if response.len() == 0 {
-		let output: String = String::from_utf8(Command::new("/home/smuely/projects/RUST/hello_world/target/debug/hello_world").output().unwrap().stdout).unwrap_or("sdf".to_string());
-		dbg!(output);
-		response = format!("HTTP/1.1 500 INTERNAL SERVER\nContent-Length: 3\n\n...");
 	}
 	stream.write_all(response.as_bytes()).unwrap();
 }
