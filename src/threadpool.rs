@@ -1,6 +1,5 @@
-use std::thread;
 use std::sync::{mpsc, Arc, Mutex};
-
+use std::thread;
 
 pub struct ThreadPool {
 	workers: Vec<Worker>,
@@ -22,7 +21,10 @@ impl ThreadPool {
 			workers.push(Worker::new(id, Arc::clone(&receiver)));
 		}
 
-		ThreadPool { workers, sender: Some(sender), }
+		ThreadPool {
+			workers,
+			sender: Some(sender),
+		}
 	}
 
 	pub fn execute<F>(&self, f: F)
@@ -48,7 +50,6 @@ impl Drop for ThreadPool {
 	}
 }
 
-
 struct Worker {
 	id: usize,
 	thread: Option<thread::JoinHandle<()>>,
@@ -69,6 +70,9 @@ impl Worker {
 				}
 			}
 		});
-		Worker { id, thread: Some(thread), }
+		Worker {
+			id,
+			thread: Some(thread),
+		}
 	}
 }
