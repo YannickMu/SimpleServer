@@ -77,7 +77,7 @@ fn handle_connection(mut stream: TcpStream) {
 		let length = content.len();
 		response = format!("HTTP/1.1 500 INTERNAL SERVER\nContent-Length: {length}\n\n{content}");
 	} else {
-	  let request_line = &lines[0];
+		let request_line = &lines[0];
 		path = request_line.split_whitespace().nth(1).unwrap_or("/");
 		req_type = request_line.split_whitespace().nth(0).unwrap_or("GET");
 	}
